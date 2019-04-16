@@ -1,0 +1,10 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+# {{ ansible_managed }}
+{% set config = monitoring_plugins_config|d({}) | combine(monitoring_plugins_group_config|d({})) | combine(monitoring_plugins_host_config|d({})) %}
+
+{% for group, options in config|dictsort if options %}
+[{{ group }}]
+{%   for option in options if option.option %}
+{{ option.option }}={{ option.value}}
+{%   endfor %}
+{% endfor %}

@@ -1,0 +1,58 @@
+---
+- name: include os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}-{{ ansible_distribution_version.split('.')[0] }}.yml"
+    - "{{ ansible_os_family }}.yml"
+
+- name: define monitoring_plugins_packages variable
+  set_fact:
+    monitoring_plugins_packages: "{{ __monitoring_plugins_packages }}"
+  when: monitoring_plugins_packages is not defined
+
+- name: install monitoring-plugins
+  apt:
+    name: "{{ monitoring_plugins_packages|flatten }}"
+    state: present
+    install_recommends: "{{ monitoring_plugins_install_recommends }}"
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: install monitoring-plugins
+  yum:
+    name: "{{ monitoring_plugins_packages|flatten }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == "RedHat"
+
+- name: install monitoring plugins configuration file
+  template:
+    src: etc/monitoring-plugins.ini.j2
+    dest: "{{ monitoring_plugins_config_file }}"
+    owner: "{{ monitoring_plugins_config_user|d(omit) }}"
+    group: "{{ monitoring_plugins_config_group|d(omit) }}"
+    mode: "{{ monitoring_plugins_config_mode }}"
+
+- name: create custom plugin directory
+  file:
+    path: "{{ monitoring_plugins_directory }}"
+    state: directory
+    owner: "{{ monitoring_plugins_directory_owner|d(omit) }}"
+    group: "{{ monitoring_plugins_directory_group|d(omit) }}"
+    mode: "{{ monitoring_plugins_directory_mode }}"
+  when: monitoring_plugins_directory|d()
+
+- name: install custom monitoring plugins
+  copy:
+    src: "files/monitoring-plugins/{{ item.file }}"
+    dest: "{{ monitoring_plugins_directory }}/{{ item.name|d(item.file|basename) }}"
+    mode: "{{ item.mode|d('0755') }}"
+    owner: "{{ item.owner|d(omit) }}"
+    group: "{{ item.group|d(omit) }}"
+  with_flattened:
+    - "{{ monitoring_plugins_custom_plugins }}"
+    - "{{ monitoring_plugins_group_custom_plugins }}"
+    - "{{ monitoring_plugins_host_custom_plugins }}"
+  when: monitoring_plugins_directory|d() and item.file|d()

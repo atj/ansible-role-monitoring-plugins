@@ -1,0 +1,4 @@
+---
+__monitoring_plugins_packages:
+  - nagios-plugins-standard
+  - libnagios-plugin-perl

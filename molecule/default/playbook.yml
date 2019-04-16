@@ -1,0 +1,22 @@
+---
+- name: Converge
+  hosts: all
+
+  roles:
+    - role: ansible-role-monitoring-plugins
+
+  post_tasks:
+    - name: Ensure test plugin is installed
+      stat:
+        path: "{{ monitoring_plugins_directory }}/test-plugin.pl"
+      register: result
+      changed_when: false
+      failed_when: result.stat.isreg is not defined or not result.stat.isreg
+
+    - name: Ensure test plugin executes successfully
+      command: "{{ monitoring_plugins_directory }}/test-plugin.pl"
+      changed_when: false
+
+  vars:
+    monitoring_plugins_custom_plugins:
+      - file: test-plugin.pl
