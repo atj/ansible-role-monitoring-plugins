@@ -8,7 +8,6 @@ env:
     - MOLECULE_DISTRO: centos6
     - MOLECULE_DISTRO: ubuntu1804
     - MOLECULE_DISTRO: ubuntu1604
-    - MOLECULE_DISTRO: ubuntu1404
     - MOLECULE_DISTRO: debian9
     # disabled due to issue with apt sources in base image
     # - MOLECULE_DISTRO: debian8
